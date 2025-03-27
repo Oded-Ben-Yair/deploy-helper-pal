@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { PartyPlanResults } from "./PartyPlanResults";
 import { generatePartyPlan } from "@/lib/ai";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -24,6 +24,8 @@ const formSchema = z.object({
   date: z.date({
     required_error: "Please select a date.",
   }),
+  startTime: z.string().min(1, { message: "Please specify a start time." }),
+  endTime: z.string().optional(),
   guests: z.string().refine((val) => !isNaN(parseInt(val)) && parseInt(val) >= 0, {
     message: "Number of guests must be a non-negative number.",
   }),
@@ -37,10 +39,15 @@ const formSchema = z.object({
   interests: z.string().min(3, { message: "Please provide at least some interests or theme ideas." }),
   dietaryRestrictions: z.string().optional(),
   preferences: z.string().optional(),
-  location: z.enum(["home", "outdoors", "venue", "other"]),
+  location: z.enum(["home", "outdoors", "venue", "restaurant", "other"]),
   foodPreferences: z.string().optional(),
   drinkPreferences: z.string().optional(),
+  dressCode: z.string().optional(),
+  specialRequests: z.string().optional(),
+  entertainment: z.string().optional(),
+  transportation: z.string().optional(),
   additionalDetails: z.string().optional(),
+  seasonalConsiderations: z.boolean().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -57,6 +64,8 @@ export function PlannerForm() {
       eventType: "",
       name: "",
       hostName: "",
+      startTime: "",
+      endTime: "",
       guests: "",
       guestType: "adults",
       budget: "",
@@ -69,7 +78,12 @@ export function PlannerForm() {
       location: "venue",
       foodPreferences: "",
       drinkPreferences: "",
+      dressCode: "",
+      specialRequests: "",
+      entertainment: "",
+      transportation: "",
       additionalDetails: "",
+      seasonalConsiderations: false,
     },
   });
 
@@ -100,7 +114,7 @@ export function PlannerForm() {
     let currentStepValid;
     
     if (step === 1) {
-      currentStepValid = form.trigger(["eventType", "name", "hostName", "date", "guests", "guestType"]);
+      currentStepValid = form.trigger(["eventType", "name", "hostName", "date", "startTime", "guests", "guestType"]);
     } else if (step === 2) {
       currentStepValid = form.trigger(["budget", "currency", "city", "country", "location"]);
     } else {
@@ -205,6 +219,50 @@ export function PlannerForm() {
               )}
             />
 
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="startTime"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-white font-medium">Start Time</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input 
+                          type="time" 
+                          className="bg-gray-700 border-gray-600 text-white pl-10"
+                          {...field}
+                        />
+                        <Clock className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                      </div>
+                    </FormControl>
+                    <FormMessage className="text-red-400" />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="endTime"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-white font-medium">End Time (Optional)</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input 
+                          type="time" 
+                          className="bg-gray-700 border-gray-600 text-white pl-10"
+                          {...field}
+                        />
+                        <Clock className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                      </div>
+                    </FormControl>
+                    <FormMessage className="text-red-400" />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <FormField
               control={form.control}
               name="guests"
@@ -237,6 +295,8 @@ export function PlannerForm() {
                       <SelectItem value="family">Family (Adults & Children)</SelectItem>
                       <SelectItem value="teenagers">Teenagers</SelectItem>
                       <SelectItem value="mixed">Mixed Age Groups</SelectItem>
+                      <SelectItem value="seniors">Seniors</SelectItem>
+                      <SelectItem value="corporate">Corporate/Professional</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage className="text-red-400" />
@@ -282,6 +342,9 @@ export function PlannerForm() {
                         <SelectItem value="JPY">JPY - ¥</SelectItem>
                         <SelectItem value="CAD">CAD - C$</SelectItem>
                         <SelectItem value="AUD">AUD - A$</SelectItem>
+                        <SelectItem value="INR">INR - ₹</SelectItem>
+                        <SelectItem value="CNY">CNY - ¥</SelectItem>
+                        <SelectItem value="BRL">BRL - R$</SelectItem>
                         <SelectItem value="Other">Other</SelectItem>
                       </SelectContent>
                     </Select>
@@ -338,9 +401,42 @@ export function PlannerForm() {
                       <SelectItem value="outdoors">Outdoors (Park, Beach, etc.)</SelectItem>
                       <SelectItem value="venue">Venue/Rented Space</SelectItem>
                       <SelectItem value="restaurant">Restaurant/Bar</SelectItem>
+                      <SelectItem value="virtual">Virtual/Online</SelectItem>
                       <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
+                  <FormMessage className="text-red-400" />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="dressCode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-white font-medium">Dress Code</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Formal, Casual, Costume, etc." className="bg-gray-700 border-gray-600 text-white" {...field} />
+                  </FormControl>
+                  <FormMessage className="text-red-400" />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="transportation"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-white font-medium">Transportation Needs</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Any transportation arrangements needed? (e.g., shuttle service, parking considerations)" 
+                      className="bg-gray-700 border-gray-600 text-white" 
+                      {...field} 
+                    />
+                  </FormControl>
                   <FormMessage className="text-red-400" />
                 </FormItem>
               )}
@@ -416,6 +512,42 @@ export function PlannerForm() {
                   <FormControl>
                     <Textarea 
                       placeholder="Any dietary restrictions to consider?" 
+                      className="bg-gray-700 border-gray-600 text-white" 
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage className="text-red-400" />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="entertainment"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-white font-medium">Entertainment Ideas</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Any specific entertainment you'd like? (DJ, live band, games, activities)" 
+                      className="bg-gray-700 border-gray-600 text-white" 
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage className="text-red-400" />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="specialRequests"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-white font-medium">Special Requests</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Any special needs or requirements? (accessibility, photography, etc.)" 
                       className="bg-gray-700 border-gray-600 text-white" 
                       {...field} 
                     />

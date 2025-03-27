@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, X, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Send, X, ThumbsUp, ThumbsDown, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { generatePartyPlan } from "@/lib/ai";
 import { InvitationPreview } from "./InvitationPreview";
@@ -23,7 +23,16 @@ export function ChatInterface({ onClose }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
-      content: "Hello! I'm your AI event planner assistant. What type of event would you like to plan today?",
+      content: `Hello! I'm your AI event planner assistant. I'll help you create an amazing event!
+      
+To get started, please tell me:
+• What type of event are you planning? (birthday, wedding, corporate, etc.)
+• Who is it for? (name, age if relevant)
+• When will it take place? (date and time)
+• How many guests do you expect?
+• Do you have a specific theme or style in mind?
+
+The more details you share, the better I can help you plan!`,
       sender: "ai",
       timestamp: new Date(),
     },
@@ -62,22 +71,60 @@ export function ChatInterface({ onClose }: ChatInterfaceProps) {
     setTimeout(async () => {
       try {
         let aiResponse = "";
+        let followUpQuestion = "";
+        const userInput = input.toLowerCase();
         
         // Check if this looks like an event planning request
-        if (input.toLowerCase().includes("plan") || 
-            input.toLowerCase().includes("event") || 
-            input.toLowerCase().includes("party") || 
-            input.toLowerCase().includes("celebration")) {
+        if (userInput.includes("plan") || 
+            userInput.includes("event") || 
+            userInput.includes("party") || 
+            userInput.includes("celebration")) {
           
-          // Extract some basic information from the message
+          // Extract information based on message content
+          let eventType = "";
+          let guestCount = "20";
+          let eventDate = "";
+          let budget = "500";
+          let location = "venue";
+          let hasTheme = false;
+          
+          if (userInput.includes("birthday")) eventType = "birthday";
+          else if (userInput.includes("wedding")) eventType = "wedding";
+          else if (userInput.includes("corporate")) eventType = "corporate";
+          else if (userInput.includes("baby shower")) eventType = "baby shower";
+          
+          // Extract guest count if mentioned
+          const guestMatch = userInput.match(/(\d+)\s*(guests|people)/);
+          if (guestMatch) guestCount = guestMatch[1];
+          
+          // Extract budget if mentioned
+          const budgetMatch = userInput.match(/(\d+)\s*(dollars|euros|budget)/);
+          if (budgetMatch) budget = budgetMatch[1];
+          
+          // Check if theme is mentioned
+          if (userInput.includes("theme") || userInput.includes("style")) {
+            hasTheme = true;
+          }
+          
+          // Create event data object for AI planning
           const eventData = {
-            name: "Event",
-            age: "",
-            guests: "20",
-            budget: "500",
+            name: eventType || "Event",
+            hostName: "",
+            guests: guestCount,
+            budget: budget,
             interests: input,
-            location: "venue",
-            additionalDetails: input
+            location: location,
+            guestType: userInput.includes("kid") ? "children" : "adults",
+            date: new Date(),
+            additionalDetails: input,
+            city: "",
+            country: "",
+            currency: "USD",
+            dietaryRestrictions: "",
+            eventType: eventType || "Event",
+            foodPreferences: "",
+            drinkPreferences: "",
+            preferences: ""
           };
           
           const result = await generatePartyPlan(eventData);
@@ -85,6 +132,7 @@ export function ChatInterface({ onClose }: ChatInterfaceProps) {
           setTheme(selectedTheme);
           setInvitationText(result.invitationText);
           
+          // Generate personalized response based on extracted information
           aiResponse = `I've created an event plan based on a ${selectedTheme} theme! Here are some ideas:
           
 Activities:
@@ -93,10 +141,42 @@ ${result.plans[0].activities.map((a: string) => `• ${a}`).join('\n')}
 Food Ideas:
 ${result.plans[0].foodIdeas.map((f: string) => `• ${f}`).join('\n')}
 
-Would you like to see the invitation I've designed for this event?`;
+Drink Suggestions:
+${result.plans[0].drinkIdeas ? result.plans[0].drinkIdeas.map((d: string) => `• ${d}`).join('\n') : "• Based on your preferences"}
+
+Decoration Ideas:
+${result.plans[0].decorationIdeas ? result.plans[0].decorationIdeas.map((d: string) => `• ${d}`).join('\n') : "• Themed decorations that match your event style"}
+
+I've also designed a custom invitation for this event!`;
+
+          // Generate appropriate follow-up question
+          if (!eventType) {
+            followUpQuestion = "\n\nCould you tell me what type of event this is (birthday, wedding, corporate, etc.)?";
+          } else if (!hasTheme) {
+            followUpQuestion = "\n\nDo you have any specific theme or style preferences for this event?";
+          } else {
+            followUpQuestion = "\n\nWould you like to see the invitation I've designed, or would you like me to suggest any specific aspects of the event planning (venue, entertainment, etc.)?";
+          }
+          
+          aiResponse += followUpQuestion;
           
         } else {
-          aiResponse = "I'm your event planning assistant. Please tell me what kind of event you'd like to plan, and include details like the occasion, number of guests, budget, and any special interests!";
+          // More detailed guidance if not an event planning request
+          aiResponse = `I'm your event planning assistant. To help you plan the perfect event, I need some key details:
+
+• Event type (birthday, wedding, anniversary, corporate, etc.)
+• Host information (who's organizing or who it's for)
+• Date, time, and duration of the event
+• Approximate number of guests and guest demographics
+• Budget range and preferred currency
+• Location (city, country, venue preferences)
+• Theme ideas or special interests
+• Food and drink preferences
+• Any dietary restrictions
+• Dress code expectations
+• Special requirements (accessibility, entertainment, etc.)
+
+The more details you provide, the better I can tailor my suggestions!`;
         }
 
         const aiMessage: Message = {
@@ -173,6 +253,11 @@ Would you like to see the invitation I've designed for this event?`;
                   <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full bg-gray-700 hover:bg-gray-600">
                     <ThumbsDown className="h-4 w-4" />
                   </Button>
+                  {message.content.includes("plan") && (
+                    <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full bg-gray-700 hover:bg-gray-600" title="Download as PDF">
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
