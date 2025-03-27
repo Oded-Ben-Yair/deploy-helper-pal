@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, X, ThumbsUp, ThumbsDown, Download } from "lucide-react";
+import { Send, X, ThumbsUp, ThumbsDown, Download, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { generatePartyPlan } from "@/lib/ai";
 import { InvitationPreview } from "./InvitationPreview";
@@ -31,6 +31,9 @@ To get started, please tell me:
 • When will it take place? (date and time)
 • How many guests do you expect?
 • Do you have a specific theme or style in mind?
+• Any food preferences or dietary restrictions?
+• What's your approximate budget?
+• Any special requests or must-have features?
 
 The more details you share, the better I can help you plan!`,
       sender: "ai",
@@ -41,6 +44,7 @@ The more details you share, the better I can help you plan!`,
   const [showInvitation, setShowInvitation] = useState(false);
   const [invitationText, setInvitationText] = useState("");
   const [theme, setTheme] = useState("Party");
+  const [partyPlan, setPartyPlan] = useState<any>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -78,7 +82,9 @@ The more details you share, the better I can help you plan!`,
         if (userInput.includes("plan") || 
             userInput.includes("event") || 
             userInput.includes("party") || 
-            userInput.includes("celebration")) {
+            userInput.includes("celebration") ||
+            userInput.includes("organize") ||
+            userInput.includes("arrange")) {
           
           // Extract information based on message content
           let eventType = "";
@@ -92,6 +98,9 @@ The more details you share, the better I can help you plan!`,
           else if (userInput.includes("wedding")) eventType = "wedding";
           else if (userInput.includes("corporate")) eventType = "corporate";
           else if (userInput.includes("baby shower")) eventType = "baby shower";
+          else if (userInput.includes("anniversary")) eventType = "anniversary";
+          else if (userInput.includes("graduation")) eventType = "graduation";
+          else if (userInput.includes("retirement")) eventType = "retirement";
           
           // Extract guest count if mentioned
           const guestMatch = userInput.match(/(\d+)\s*(guests|people)/);
@@ -114,7 +123,7 @@ The more details you share, the better I can help you plan!`,
             budget: budget,
             interests: input,
             location: location,
-            guestType: userInput.includes("kid") ? "children" : "adults",
+            guestType: userInput.includes("kid") || userInput.includes("child") ? "children" : "adults",
             date: new Date(),
             additionalDetails: input,
             city: "",
@@ -128,6 +137,7 @@ The more details you share, the better I can help you plan!`,
           };
           
           const result = await generatePartyPlan(eventData);
+          setPartyPlan(result);
           const selectedTheme = result.plans[0].theme;
           setTheme(selectedTheme);
           setInvitationText(result.invitationText);
@@ -174,7 +184,9 @@ I've also designed a custom invitation for this event!`;
 • Food and drink preferences
 • Any dietary restrictions
 • Dress code expectations
-• Special requirements (accessibility, entertainment, etc.)
+• Transportation needs
+• Entertainment preferences
+• Special requirements (accessibility, photography, etc.)
 
 The more details you provide, the better I can tailor my suggestions!`;
         }
@@ -211,6 +223,55 @@ The more details you provide, the better I can tailor my suggestions!`;
     setShowInvitation(true);
   };
 
+  const downloadPlan = () => {
+    if (!partyPlan) return;
+    
+    const selectedPlan = partyPlan.plans[0];
+    const planText = `
+# ${selectedPlan.title}
+
+## Description
+${selectedPlan.description}
+
+## Theme
+${selectedPlan.theme}
+
+## Activities
+${selectedPlan.activities.map((a: string) => `- ${a}`).join('\n')}
+
+## Food Ideas
+${selectedPlan.foodIdeas.map((f: string) => `- ${f}`).join('\n')}
+
+## Drink Ideas
+${selectedPlan.drinkIdeas ? selectedPlan.drinkIdeas.map((d: string) => `- ${d}`).join('\n') : "- Based on your preferences"}
+
+## Decorations
+${selectedPlan.decorations ? selectedPlan.decorations.map((d: string) => `- ${d}`).join('\n') : "- Themed decorations"}
+
+## Venue Suggestions
+${selectedPlan.venues ? selectedPlan.venues.map((v: string) => `- ${v}`).join('\n') : "- Based on your location preferences"}
+
+## Budget
+Estimated Cost: ${selectedPlan.estimatedCost}
+
+## Invitation
+${partyPlan.invitationText}
+`;
+
+    const element = document.createElement("a");
+    const file = new Blob([planText], {type: 'text/plain'});
+    element.href = URL.createObjectURL(file);
+    element.download = `${selectedPlan.theme}_Event_Plan.txt`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+    
+    toast({
+      title: "Success",
+      description: "Event plan downloaded successfully!",
+    });
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto h-[calc(100vh-80px)] flex flex-col">
       <div className="flex items-center justify-between mb-4">
@@ -237,13 +298,26 @@ The more details you provide, the better I can tailor my suggestions!`;
             >
               <div className="whitespace-pre-wrap">{message.content}</div>
               {message.sender === "ai" && message.content.includes("invitation") && (
-                <Button 
-                  variant="outline" 
-                  className="mt-3 bg-gray-700 hover:bg-gray-600 text-white border-0"
-                  onClick={showInvitationPreview}
-                >
-                  View Invitation
-                </Button>
+                <div className="flex gap-2 mt-3">
+                  <Button 
+                    variant="outline" 
+                    className="bg-gray-700 hover:bg-gray-600 text-white border-0"
+                    onClick={showInvitationPreview}
+                  >
+                    <Eye className="mr-2 h-4 w-4" />
+                    View Invitation
+                  </Button>
+                  {partyPlan && (
+                    <Button 
+                      variant="outline" 
+                      className="bg-blue-700 hover:bg-blue-600 text-white border-0"
+                      onClick={downloadPlan}
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Download Plan
+                    </Button>
+                  )}
+                </div>
               )}
               {message.sender === "ai" && (
                 <div className="flex mt-2 gap-2 justify-end">
@@ -253,11 +327,6 @@ The more details you provide, the better I can tailor my suggestions!`;
                   <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full bg-gray-700 hover:bg-gray-600">
                     <ThumbsDown className="h-4 w-4" />
                   </Button>
-                  {message.content.includes("plan") && (
-                    <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full bg-gray-700 hover:bg-gray-600" title="Download as PDF">
-                      <Download className="h-4 w-4" />
-                    </Button>
-                  )}
                 </div>
               )}
             </div>
