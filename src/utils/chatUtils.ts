@@ -1,7 +1,11 @@
 
 import { generatePartyPlan } from "@/lib/ai";
+import { PartyPlanData } from "@/types/chat";
 
-export async function processUserMessage(input: string) {
+export async function processUserMessage(input: string): Promise<{
+  response: string;
+  partyPlan: PartyPlanData | null;
+}> {
   // Check if this looks like an event planning request
   const userInput = input.toLowerCase();
   
