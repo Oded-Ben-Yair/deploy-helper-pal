@@ -13,7 +13,7 @@ const Index = () => {
     <div className="min-h-screen bg-[#1A1F2C] text-white flex flex-col">
       <header className="py-4 px-6 flex items-center justify-between border-b border-gray-800">
         <div className="flex items-center gap-2">
-          <div className="text-2xl font-bold">EventPlanner AI</div>
+          <div className="text-2xl font-bold">PartyPilot</div>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" className="text-gray-300 hover:text-white hover:bg-gray-800">
