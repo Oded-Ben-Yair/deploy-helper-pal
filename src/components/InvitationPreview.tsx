@@ -25,6 +25,12 @@ export function InvitationPreview({ invitationText, theme }: InvitationPreviewPr
       "ocean": "bg-gradient-to-r from-blue-400 to-teal-500",
       "magic": "bg-gradient-to-r from-purple-400 to-pink-500",
       "science": "bg-gradient-to-r from-blue-400 to-green-500",
+      "wedding": "bg-gradient-to-r from-purple-300 to-pink-200",
+      "corporate": "bg-gradient-to-r from-blue-700 to-blue-900",
+      "graduation": "bg-gradient-to-r from-yellow-500 to-red-500",
+      "party": "bg-gradient-to-r from-purple-500 to-indigo-500",
+      "formal": "bg-gradient-to-r from-gray-700 to-gray-900",
+      "casual": "bg-gradient-to-r from-orange-400 to-pink-500",
     };
     
     // Default background if theme doesn't match
@@ -45,6 +51,12 @@ export function InvitationPreview({ invitationText, theme }: InvitationPreviewPr
       "ocean": "🌊",
       "magic": "✨",
       "science": "🔬",
+      "wedding": "💍",
+      "corporate": "💼",
+      "graduation": "🎓",
+      "party": "🎉",
+      "formal": "🎩",
+      "casual": "🎪",
     };
     
     return emojiMap[theme.toLowerCase()] || "🎉";
@@ -54,7 +66,7 @@ export function InvitationPreview({ invitationText, theme }: InvitationPreviewPr
     const element = document.createElement("a");
     const file = new Blob([invitationText], {type: 'text/plain'});
     element.href = URL.createObjectURL(file);
-    element.download = "birthday_invitation.txt";
+    element.download = "event_invitation.txt";
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
@@ -67,15 +79,15 @@ export function InvitationPreview({ invitationText, theme }: InvitationPreviewPr
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-center text-purple-800">
+      <h2 className="text-2xl font-bold text-center text-gray-200">
         Invitation Preview {getThemeEmoji(theme)}
       </h2>
       
-      <Card className="overflow-hidden border-2 border-purple-200 shadow-lg">
+      <Card className="overflow-hidden border-2 border-gray-700 bg-gray-800 shadow-lg">
         <div className={`${getThemeColor(theme)} p-1`} />
-        <CardContent className="p-6">
+        <CardContent className="p-6 text-white">
           <div className="aspect-w-16 aspect-h-9 mb-4">
-            <AspectRatio ratio={16/9} className="bg-gray-100 rounded-md mb-4 flex items-center justify-center text-gray-400">
+            <AspectRatio ratio={16/9} className="bg-gray-700 rounded-md mb-4 flex items-center justify-center text-gray-300">
               <div className="text-center p-4">
                 <div className="text-4xl mb-2">{getThemeEmoji(theme)}</div>
                 <p className="text-sm">Invitation Image</p>
@@ -84,17 +96,17 @@ export function InvitationPreview({ invitationText, theme }: InvitationPreviewPr
             </AspectRatio>
           </div>
           
-          <div className="whitespace-pre-wrap font-medium text-center">
+          <div className="whitespace-pre-wrap font-medium text-center text-gray-100">
             {invitationText}
           </div>
         </CardContent>
       </Card>
       
       <div className="flex flex-col sm:flex-row gap-4">
-        <Button className="flex-1 bg-purple-600 hover:bg-purple-700" onClick={copyToClipboard}>
+        <Button className="flex-1 bg-blue-600 hover:bg-blue-700" onClick={copyToClipboard}>
           Copy Text
         </Button>
-        <Button variant="outline" className="flex-1" onClick={downloadInvitation}>
+        <Button variant="outline" className="flex-1 border-gray-700 text-white hover:bg-gray-700" onClick={downloadInvitation}>
           Download Text
         </Button>
       </div>

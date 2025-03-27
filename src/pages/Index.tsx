@@ -1,99 +1,76 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlannerForm } from "@/components/PlannerForm";
+import { MessageCircle, FileText } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { PlannerForm } from "@/components/PlannerForm";
+import { ChatInterface } from "@/components/ChatInterface";
 
 const Index = () => {
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-blue-50">
-      <div className="container mx-auto py-10 px-4">
-        <header className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-purple-800 mb-3">AI Birthday Planner</h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Create the perfect birthday celebration with AI-powered party planning
-          </p>
-        </header>
+  const [isChatOpen, setIsChatOpen] = React.useState(false);
 
-        <div className="max-w-4xl mx-auto grid gap-8 md:grid-cols-2">
-          <Card className="shadow-lg border-purple-100">
-            <CardHeader>
-              <CardTitle className="text-2xl text-purple-800">Plan a Birthday</CardTitle>
-              <CardDescription>
-                Let our AI assistant help you plan the perfect birthday party
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4">
-                Fill out a simple form with details about the birthday person and preferences,
-                and our AI will generate customized party plans.
-              </p>
+  return (
+    <div className="min-h-screen bg-[#1A1F2C] text-white flex flex-col">
+      <header className="py-4 px-6 flex items-center justify-between border-b border-gray-800">
+        <div className="flex items-center gap-2">
+          <div className="text-2xl font-bold">EventPlanner AI</div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" className="text-gray-300 hover:text-white hover:bg-gray-800">
+            Help
+          </Button>
+        </div>
+      </header>
+
+      <main className="flex-1 flex flex-col items-center justify-center px-4 relative">
+        {isChatOpen ? (
+          <ChatInterface onClose={() => setIsChatOpen(false)} />
+        ) : (
+          <div className="max-w-3xl w-full mx-auto text-center space-y-8">
+            <h1 className="text-4xl sm:text-5xl font-bold mb-6">
+              Plan Your Perfect Event
+            </h1>
+            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+              Our AI assistant will help you create custom event plans for any occasion
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-12">
+              <Button 
+                className="p-6 text-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl"
+                onClick={() => setIsChatOpen(true)}
+              >
+                <MessageCircle className="mr-2 h-5 w-5" />
+                Let's plan together. Chat with me!
+              </Button>
+              
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button className="w-full bg-purple-600 hover:bg-purple-700">
-                    Start Planning
+                  <Button 
+                    variant="outline" 
+                    className="p-6 text-lg border-gray-700 hover:bg-gray-800 rounded-xl"
+                  >
+                    <FileText className="mr-2 h-5 w-5" />
+                    I'm in a rush. Fill a form!
                   </Button>
                 </SheetTrigger>
-                <SheetContent className="w-full sm:max-w-lg md:max-w-xl overflow-y-auto">
+                <SheetContent className="w-full sm:max-w-lg md:max-w-xl overflow-y-auto bg-[#222] border-gray-800">
                   <SheetHeader className="mb-5">
-                    <SheetTitle>Birthday Party Planner</SheetTitle>
-                    <SheetDescription>
-                      Fill out the details below to get AI-generated birthday party plans.
+                    <SheetTitle className="text-white">Event Planner</SheetTitle>
+                    <SheetDescription className="text-gray-400">
+                      Fill out the details below to get AI-generated event plans with downloadable invitations.
                     </SheetDescription>
                   </SheetHeader>
                   <PlannerForm />
                 </SheetContent>
               </Sheet>
-            </CardContent>
-          </Card>
+            </div>
 
-          <Card className="shadow-lg border-purple-100">
-            <CardHeader>
-              <CardTitle className="text-2xl text-purple-800">Features</CardTitle>
-              <CardDescription>
-                AI-powered planning to make birthdays special
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-3">
-                <li className="flex items-start">
-                  <div className="mr-2 rounded-full bg-purple-100 p-1 text-purple-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 6 9 17l-5-5" />
-                    </svg>
-                  </div>
-                  <span>Smart theme suggestions based on interests</span>
-                </li>
-                <li className="flex items-start">
-                  <div className="mr-2 rounded-full bg-purple-100 p-1 text-purple-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 6 9 17l-5-5" />
-                    </svg>
-                  </div>
-                  <span>Custom invitation texts crafted for the occasion</span>
-                </li>
-                <li className="flex items-start">
-                  <div className="mr-2 rounded-full bg-purple-100 p-1 text-purple-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 6 9 17l-5-5" />
-                    </svg>
-                  </div>
-                  <span>Budget optimization for maximum enjoyment</span>
-                </li>
-                <li className="flex items-start">
-                  <div className="mr-2 rounded-full bg-purple-100 p-1 text-purple-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 6 9 17l-5-5" />
-                    </svg>
-                  </div>
-                  <span>Activity recommendations tailored to age groups</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            <div className="mt-16 text-sm text-gray-500">
+              Plan birthdays, weddings, corporate events, parties, and more!
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 };

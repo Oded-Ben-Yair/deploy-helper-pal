@@ -13,17 +13,16 @@ import { PartyPlanResults } from "./PartyPlanResults";
 import { generatePartyPlan } from "@/lib/ai";
 
 const formSchema = z.object({
+  eventType: z.string().min(2, { message: "Event type must be specified." }),
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  age: z.string().refine((val) => !isNaN(parseInt(val)) && parseInt(val) > 0, {
-    message: "Age must be a positive number.",
-  }),
+  date: z.string().min(2, { message: "Date must be specified." }),
   guests: z.string().refine((val) => !isNaN(parseInt(val)) && parseInt(val) >= 0, {
     message: "Number of guests must be a non-negative number.",
   }),
   budget: z.string().refine((val) => !isNaN(parseInt(val)) && parseInt(val) > 0, {
     message: "Budget must be a positive number.",
   }),
-  interests: z.string().min(3, { message: "Please provide at least some interests." }),
+  interests: z.string().min(3, { message: "Please provide at least some interests or theme ideas." }),
   dietaryRestrictions: z.string().optional(),
   preferences: z.string().optional(),
   location: z.enum(["home", "outdoors", "venue", "other"]),
@@ -41,14 +40,15 @@ export function PlannerForm() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      eventType: "",
       name: "",
-      age: "",
+      date: "",
       guests: "",
       budget: "",
       interests: "",
       dietaryRestrictions: "",
       preferences: "",
-      location: "home",
+      location: "venue",
       additionalDetails: "",
     },
   });
@@ -56,8 +56,8 @@ export function PlannerForm() {
   const onSubmit = async (data: FormValues) => {
     setIsGenerating(true);
     toast({
-      title: "Generating party plans",
-      description: "Our AI is creating personalized party plans for you...",
+      title: "Generating event plans",
+      description: "Our AI is creating personalized event plans for you...",
     });
 
     try {
@@ -67,7 +67,7 @@ export function PlannerForm() {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to generate party plans. Please try again.",
+        description: "Failed to generate event plans. Please try again.",
         variant: "destructive",
       });
       console.error("Error generating plans:", error);
@@ -78,7 +78,7 @@ export function PlannerForm() {
 
   const nextStep = () => {
     const currentStepValid = [
-      form.trigger(["name", "age", "guests"]),
+      form.trigger(["eventType", "name", "date", "guests"]),
       form.trigger(["budget", "interests", "location", "dietaryRestrictions", "preferences", "additionalDetails"]),
     ][step - 1];
 
@@ -100,12 +100,26 @@ export function PlannerForm() {
           <div className="space-y-4">
             <FormField
               control={form.control}
+              name="eventType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-white">Event Type</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Birthday, Wedding, Corporate Event" className="bg-gray-700 border-gray-600 text-white" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Birthday Person's Name</FormLabel>
+                  <FormLabel className="text-white">Event Name/Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter name" {...field} />
+                    <Input placeholder="Enter event name" className="bg-gray-700 border-gray-600 text-white" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -114,12 +128,12 @@ export function PlannerForm() {
 
             <FormField
               control={form.control}
-              name="age"
+              name="date"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Age (or turning age)</FormLabel>
+                  <FormLabel className="text-white">Event Date</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter age" {...field} />
+                    <Input placeholder="MM/DD/YYYY" className="bg-gray-700 border-gray-600 text-white" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -131,9 +145,9 @@ export function PlannerForm() {
               name="guests"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Number of Guests</FormLabel>
+                  <FormLabel className="text-white">Number of Guests</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter number of guests" {...field} />
+                    <Input placeholder="Enter number of guests" className="bg-gray-700 border-gray-600 text-white" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -149,9 +163,9 @@ export function PlannerForm() {
               name="budget"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Budget ($)</FormLabel>
+                  <FormLabel className="text-white">Budget ($)</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter budget" {...field} />
+                    <Input placeholder="Enter budget" className="bg-gray-700 border-gray-600 text-white" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -163,14 +177,14 @@ export function PlannerForm() {
               name="location"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Party Location</FormLabel>
+                  <FormLabel className="text-white">Event Location</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                         <SelectValue placeholder="Select a location" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent className="bg-gray-700 border-gray-600 text-white">
                       <SelectItem value="home">At Home</SelectItem>
                       <SelectItem value="outdoors">Outdoors (Park, Beach, etc.)</SelectItem>
                       <SelectItem value="venue">Venue/Rented Space</SelectItem>
@@ -187,12 +201,12 @@ export function PlannerForm() {
               name="interests"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Interests/Hobbies</FormLabel>
+                  <FormLabel className="text-white">Theme Ideas/Interests</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Enter interests or hobbies" {...field} />
+                    <Textarea placeholder="Enter theme ideas or interests" className="bg-gray-700 border-gray-600 text-white" {...field} />
                   </FormControl>
-                  <FormDescription>
-                    What does the birthday person enjoy? (e.g., sports, movies, gaming, art)
+                  <FormDescription className="text-gray-400">
+                    What themes or activities would you like to include? (e.g., sports, movies, formal, casual)
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -204,9 +218,9 @@ export function PlannerForm() {
               name="dietaryRestrictions"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Dietary Restrictions (Optional)</FormLabel>
+                  <FormLabel className="text-white">Dietary Restrictions (Optional)</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Any dietary restrictions to consider?" {...field} />
+                    <Textarea placeholder="Any dietary restrictions to consider?" className="bg-gray-700 border-gray-600 text-white" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -218,9 +232,9 @@ export function PlannerForm() {
               name="additionalDetails"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Additional Details (Optional)</FormLabel>
+                  <FormLabel className="text-white">Additional Details (Optional)</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Any other information that might help with planning" {...field} />
+                    <Textarea placeholder="Any other information that might help with planning" className="bg-gray-700 border-gray-600 text-white" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -231,18 +245,18 @@ export function PlannerForm() {
 
         <div className="flex justify-between pt-4">
           {step > 1 && (
-            <Button type="button" variant="outline" onClick={prevStep}>
+            <Button type="button" variant="outline" className="border-gray-600 text-white hover:bg-gray-700" onClick={prevStep}>
               Previous
             </Button>
           )}
           
           {step < 2 ? (
-            <Button type="button" onClick={nextStep}>
+            <Button type="button" className="bg-blue-600 hover:bg-blue-700 ml-auto" onClick={nextStep}>
               Next
             </Button>
           ) : (
-            <Button type="submit" disabled={isGenerating}>
-              {isGenerating ? "Generating..." : "Generate Party Plans"}
+            <Button type="submit" disabled={isGenerating} className="bg-blue-600 hover:bg-blue-700">
+              {isGenerating ? "Generating..." : "Generate Event Plans"}
             </Button>
           )}
         </div>
