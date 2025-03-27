@@ -28,10 +28,10 @@ const Index = () => {
         ) : (
           <div className="max-w-3xl w-full mx-auto text-center space-y-8">
             <h1 className="text-4xl sm:text-5xl font-bold mb-6">
-              Plan Your Perfect Event
+              PartyPilot
             </h1>
             <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-              Our AI assistant will help you create custom event plans for any occasion
+              Your AI co-pilot for creating unforgettable events - from concept to execution in minutes
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center mt-12">
@@ -47,7 +47,7 @@ const Index = () => {
                 <SheetTrigger asChild>
                   <Button 
                     variant="outline" 
-                    className="p-6 text-lg border-gray-700 hover:bg-gray-800 rounded-xl"
+                    className="p-6 text-lg border-gray-700 hover:bg-gray-800 rounded-xl text-white"
                   >
                     <FileText className="mr-2 h-5 w-5" />
                     I'm in a rush. Fill a form!
@@ -65,8 +65,8 @@ const Index = () => {
               </Sheet>
             </div>
 
-            <div className="mt-16 text-sm text-gray-500">
-              Plan birthdays, weddings, corporate events, parties, and more!
+            <div className="mt-16 text-sm text-gray-300">
+              Your personal event planner!
             </div>
           </div>
         )}
