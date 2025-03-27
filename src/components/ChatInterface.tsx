@@ -145,7 +145,7 @@ Drink Suggestions:
 ${result.plans[0].drinkIdeas ? result.plans[0].drinkIdeas.map((d: string) => `• ${d}`).join('\n') : "• Based on your preferences"}
 
 Decoration Ideas:
-${result.plans[0].decorationIdeas ? result.plans[0].decorationIdeas.map((d: string) => `• ${d}`).join('\n') : "• Themed decorations that match your event style"}
+${result.plans[0].decorations ? result.plans[0].decorations.map((d: string) => `• ${d}`).join('\n') : "• Themed decorations that match your event style"}
 
 I've also designed a custom invitation for this event!`;
 
