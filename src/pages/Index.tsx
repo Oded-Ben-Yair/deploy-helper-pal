@@ -47,7 +47,7 @@ const Index = () => {
                 <SheetTrigger asChild>
                   <Button 
                     variant="outline" 
-                    className="p-6 text-lg border-gray-700 hover:bg-gray-800 rounded-xl text-white"
+                    className="p-6 text-lg bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 border-0 rounded-xl text-white"
                   >
                     <FileText className="mr-2 h-5 w-5" />
                     I'm in a rush. Fill a form!
