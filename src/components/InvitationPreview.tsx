@@ -1,8 +1,10 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { Loader2 } from "lucide-react";
+import { generateInvitationImage } from "@/lib/ai";
 
 type InvitationPreviewProps = {
   invitationText: string;
@@ -10,6 +12,28 @@ type InvitationPreviewProps = {
 };
 
 export function InvitationPreview({ invitationText, theme }: InvitationPreviewProps) {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    const generateImage = async () => {
+      try {
+        setIsGenerating(true);
+        const imgUrl = await generateInvitationImage(theme, invitationText);
+        setImageUrl(imgUrl);
+        setError(false);
+      } catch (err) {
+        console.error("Failed to generate image:", err);
+        setError(true);
+      } finally {
+        setIsGenerating(false);
+      }
+    };
+    
+    generateImage();
+  }, [theme, invitationText]);
+
   // Get a background color based on the theme
   const getThemeColor = (theme: string): string => {
     const themeMap: Record<string, string> = {
@@ -88,11 +112,29 @@ export function InvitationPreview({ invitationText, theme }: InvitationPreviewPr
         <CardContent className="p-6 text-white">
           <div className="aspect-w-16 aspect-h-9 mb-4">
             <AspectRatio ratio={16/9} className="bg-gray-700 rounded-md mb-4 flex items-center justify-center text-gray-300">
-              <div className="text-center p-4">
-                <div className="text-4xl mb-2">{getThemeEmoji(theme)}</div>
-                <p className="text-sm">Invitation Image</p>
-                <p className="text-xs">(Add your own image here)</p>
-              </div>
+              {isGenerating ? (
+                <div className="text-center p-4">
+                  <Loader2 className="w-10 h-10 animate-spin mx-auto mb-2" />
+                  <p className="text-sm">Generating invitation image...</p>
+                </div>
+              ) : error ? (
+                <div className="text-center p-4">
+                  <div className="text-4xl mb-2">😕</div>
+                  <p className="text-sm">Could not generate image</p>
+                  <p className="text-xs mt-2">AI-generated image will appear here</p>
+                </div>
+              ) : imageUrl ? (
+                <img 
+                  src={imageUrl} 
+                  alt={`${theme} themed invitation`} 
+                  className="rounded-md object-cover w-full h-full"
+                />
+              ) : (
+                <div className="text-center p-4">
+                  <div className="text-4xl mb-2">{getThemeEmoji(theme)}</div>
+                  <p className="text-sm">Invitation Image</p>
+                </div>
+              )}
             </AspectRatio>
           </div>
           
