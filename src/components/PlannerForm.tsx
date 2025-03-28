@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { PartyPlanResults } from "./PartyPlanResults";
 import { generatePartyPlan } from "@/lib/ai";
-import { CalendarIcon, Users, Utensils, Cocktail, DollarSign } from "lucide-react";
+import { CalendarIcon, Users, Utensils, Wine, DollarSign } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -471,7 +471,7 @@ export function PlannerForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-white font-medium flex items-center">
-                    <Cocktail className="mr-2 h-4 w-4" />
+                    <Wine className="mr-2 h-4 w-4" />
                     Drink Preferences
                   </FormLabel>
                   <FormControl>
