@@ -11,10 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { PartyPlanResults } from "./PartyPlanResults";
 import { generatePartyPlan } from "@/lib/ai";
-import { CalendarIcon, Clock } from "lucide-react";
+import { CalendarIcon, Users, Utensils, Cocktail, DollarSign } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
@@ -25,7 +26,6 @@ const formSchema = z.object({
   date: z.date({
     required_error: "Please select a date.",
   }),
-  startTime: z.string().min(1, { message: "Please specify a start time." }),
   guests: z.string().refine((val) => !isNaN(parseInt(val)) && parseInt(val) >= 0, {
     message: "Number of guests must be a non-negative number.",
   }),
@@ -34,20 +34,19 @@ const formSchema = z.object({
     message: "Budget must be a positive number.",
   }),
   currency: z.string().min(1, { message: "Please select a currency." }),
+  location: z.enum(["home", "outdoors", "venue", "restaurant", "virtual", "other"]),
   city: z.string().min(1, { message: "City must be specified." }),
   country: z.string().min(1, { message: "Country must be specified." }),
   interests: z.string().min(3, { message: "Please provide some interests or theme ideas." }),
-  dietaryRestrictions: z.string().optional(),
-  location: z.enum(["home", "outdoors", "venue", "restaurant", "other"]),
   foodPreferences: z.string().optional(),
   drinkPreferences: z.string().optional(),
+  dietaryRestrictions: z.string().optional(),
   additionalDetails: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 export function PlannerForm() {
-  const [step, setStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [planResults, setPlanResults] = useState<any | null>(null);
   const [showAgeField, setShowAgeField] = useState(false);
@@ -60,7 +59,6 @@ export function PlannerForm() {
       name: "",
       hostName: "",
       age: "",
-      startTime: "",
       guests: "",
       guestType: "adults",
       budget: "",
@@ -68,10 +66,10 @@ export function PlannerForm() {
       city: "",
       country: "",
       interests: "",
-      dietaryRestrictions: "",
       location: "venue",
       foodPreferences: "",
       drinkPreferences: "",
+      dietaryRestrictions: "",
       additionalDetails: "",
     },
   });
@@ -94,7 +92,6 @@ export function PlannerForm() {
     try {
       const result = await generatePartyPlan(data);
       setPlanResults(result);
-      setStep(3);
     } catch (error) {
       toast({
         title: "Error",
@@ -107,33 +104,15 @@ export function PlannerForm() {
     }
   };
 
-  const nextStep = () => {
-    let currentStepValid;
-    
-    if (step === 1) {
-      const fieldsToValidate = ["eventType", "name", "hostName", "date", "startTime", "guests", "guestType"];
-      if (showAgeField) fieldsToValidate.push("age");
-      currentStepValid = form.trigger(fieldsToValidate);
-    } else {
-      currentStepValid = form.trigger(["budget", "currency", "city", "country", "location", "interests", "foodPreferences", "drinkPreferences"]);
-    }
-
-    currentStepValid.then((valid) => {
-      if (valid) setStep(step + 1);
-    });
-  };
-
-  const prevStep = () => setStep(step - 1);
-
-  if (step === 3 && planResults) {
+  if (planResults) {
     return <PartyPlanResults results={planResults} />;
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {step === 1 && (
-          <div className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 overflow-y-auto px-1">
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="eventType"
@@ -153,23 +132,25 @@ export function PlannerForm() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-white font-medium">Event Name/Title</FormLabel>
+                  <FormLabel className="text-white font-medium">Who is this event for?</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter event name" className="bg-gray-700 border-gray-600 text-white" {...field} />
+                    <Input placeholder="Enter name" className="bg-gray-700 border-gray-600 text-white" {...field} />
                   </FormControl>
                   <FormMessage className="text-red-400" />
                 </FormItem>
               )}
             />
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="hostName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-white font-medium">Host Name</FormLabel>
+                  <FormLabel className="text-white font-medium">Who is planning this event?</FormLabel>
                   <FormControl>
-                    <Input placeholder="Who is hosting this event?" className="bg-gray-700 border-gray-600 text-white" {...field} />
+                    <Input placeholder="Your name" className="bg-gray-700 border-gray-600 text-white" {...field} />
                   </FormControl>
                   <FormMessage className="text-red-400" />
                 </FormItem>
@@ -182,7 +163,7 @@ export function PlannerForm() {
                 name="age"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-white font-medium">Age (Birthday Celebrant)</FormLabel>
+                    <FormLabel className="text-white font-medium">Age of the celebrant</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 
@@ -197,6 +178,50 @@ export function PlannerForm() {
               />
             )}
 
+            {!showAgeField && (
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel className="text-white font-medium">Event Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal bg-gray-700 border-gray-600 text-white hover:bg-gray-600",
+                              !field.value && "text-gray-400"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 bg-gray-800 border-gray-700" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          initialFocus
+                          className="p-3 pointer-events-auto bg-gray-800 text-white"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage className="text-red-400" />
+                  </FormItem>
+                )}
+              />
+            )}
+          </div>
+
+          {showAgeField && (
             <FormField
               control={form.control}
               name="date"
@@ -236,43 +261,27 @@ export function PlannerForm() {
                 </FormItem>
               )}
             />
+          )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="startTime"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-white font-medium">Start Time</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input 
-                          type="time" 
-                          className="bg-gray-700 border-gray-600 text-white pl-10"
-                          {...field}
-                        />
-                        <Clock className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                      </div>
-                    </FormControl>
-                    <FormMessage className="text-red-400" />
-                  </FormItem>
-                )}
-              />
+          <Separator className="bg-gray-700" />
 
-              <FormField
-                control={form.control}
-                name="guests"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-white font-medium">Number of Guests</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter number of guests" className="bg-gray-700 border-gray-600 text-white" {...field} />
-                    </FormControl>
-                    <FormMessage className="text-red-400" />
-                  </FormItem>
-                )}
-              />
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="guests"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-white font-medium flex items-center">
+                    <Users className="mr-2 h-4 w-4" />
+                    Guest Count
+                  </FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="How many guests?" className="bg-gray-700 border-gray-600 text-white" {...field} />
+                  </FormControl>
+                  <FormMessage className="text-red-400" />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
@@ -301,87 +310,59 @@ export function PlannerForm() {
               )}
             />
           </div>
-        )}
 
-        {step === 2 && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="budget"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-white font-medium">Budget</FormLabel>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="budget"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-white font-medium flex items-center">
+                    <DollarSign className="mr-2 h-4 w-4" />
+                    Budget
+                  </FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="Enter budget amount" className="bg-gray-700 border-gray-600 text-white" {...field} />
+                  </FormControl>
+                  <FormMessage className="text-red-400" />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="currency"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-white font-medium">Currency</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <Input placeholder="Enter budget amount" className="bg-gray-700 border-gray-600 text-white" {...field} />
+                      <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                        <SelectValue placeholder="Select currency" />
+                      </SelectTrigger>
                     </FormControl>
-                    <FormMessage className="text-red-400" />
-                  </FormItem>
-                )}
-              />
+                    <SelectContent className="bg-gray-700 border-gray-600 text-white">
+                      <SelectItem value="USD">USD - $</SelectItem>
+                      <SelectItem value="EUR">EUR - €</SelectItem>
+                      <SelectItem value="GBP">GBP - £</SelectItem>
+                      <SelectItem value="NIS">NIS - ₪</SelectItem>
+                      <SelectItem value="JPY">JPY - ¥</SelectItem>
+                      <SelectItem value="CAD">CAD - C$</SelectItem>
+                      <SelectItem value="AUD">AUD - A$</SelectItem>
+                      <SelectItem value="INR">INR - ₹</SelectItem>
+                      <SelectItem value="CNY">CNY - ¥</SelectItem>
+                      <SelectItem value="BRL">BRL - R$</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage className="text-red-400" />
+                </FormItem>
+              )}
+            />
+          </div>
 
-              <FormField
-                control={form.control}
-                name="currency"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-white font-medium">Currency</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                          <SelectValue placeholder="Select currency" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="bg-gray-700 border-gray-600 text-white">
-                        <SelectItem value="USD">USD - $</SelectItem>
-                        <SelectItem value="EUR">EUR - €</SelectItem>
-                        <SelectItem value="GBP">GBP - £</SelectItem>
-                        <SelectItem value="NIS">NIS - ₪</SelectItem>
-                        <SelectItem value="JPY">JPY - ¥</SelectItem>
-                        <SelectItem value="CAD">CAD - C$</SelectItem>
-                        <SelectItem value="AUD">AUD - A$</SelectItem>
-                        <SelectItem value="INR">INR - ₹</SelectItem>
-                        <SelectItem value="CNY">CNY - ¥</SelectItem>
-                        <SelectItem value="BRL">BRL - R$</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage className="text-red-400" />
-                  </FormItem>
-                )}
-              />
-            </div>
+          <Separator className="bg-gray-700" />
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="city"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-white font-medium">City</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter city" className="bg-gray-700 border-gray-600 text-white" {...field} />
-                    </FormControl>
-                    <FormMessage className="text-red-400" />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="country"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-white font-medium">Country</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter country" className="bg-gray-700 border-gray-600 text-white" {...field} />
-                    </FormControl>
-                    <FormMessage className="text-red-400" />
-                  </FormItem>
-                )}
-              />
-            </div>
-
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="location"
@@ -408,37 +389,74 @@ export function PlannerForm() {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="interests"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-white font-medium">Theme Ideas/Interests</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Enter theme ideas or interests" 
-                      className="bg-gray-700 border-gray-600 text-white" 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormDescription className="text-gray-400">
-                    What themes or activities would you like to include?
-                  </FormDescription>
-                  <FormMessage className="text-red-400" />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="city"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-white font-medium">City</FormLabel>
+                    <FormControl>
+                      <Input placeholder="City" className="bg-gray-700 border-gray-600 text-white" {...field} />
+                    </FormControl>
+                    <FormMessage className="text-red-400" />
+                  </FormItem>
+                )}
+              />
 
+              <FormField
+                control={form.control}
+                name="country"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-white font-medium">Country</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Country" className="bg-gray-700 border-gray-600 text-white" {...field} />
+                    </FormControl>
+                    <FormMessage className="text-red-400" />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
+          <Separator className="bg-gray-700" />
+
+          <FormField
+            control={form.control}
+            name="interests"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-white font-medium">Theme Ideas/Interests</FormLabel>
+                <FormControl>
+                  <Textarea 
+                    placeholder="What themes or interests should we include?" 
+                    className="bg-gray-700 border-gray-600 text-white resize-none h-20" 
+                    {...field} 
+                  />
+                </FormControl>
+                <FormDescription className="text-gray-400">
+                  Tell us about themes, activities, or special interests
+                </FormDescription>
+                <FormMessage className="text-red-400" />
+              </FormItem>
+            )}
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="foodPreferences"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-white font-medium">Food Preferences</FormLabel>
+                  <FormLabel className="text-white font-medium flex items-center">
+                    <Utensils className="mr-2 h-4 w-4" />
+                    Food Preferences
+                  </FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="What kind of food would you like to serve?" 
-                      className="bg-gray-700 border-gray-600 text-white" 
+                      placeholder="What kind of food would you like?" 
+                      className="bg-gray-700 border-gray-600 text-white resize-none h-20" 
                       {...field} 
                     />
                   </FormControl>
@@ -452,47 +470,14 @@ export function PlannerForm() {
               name="drinkPreferences"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-white font-medium">Drink Preferences</FormLabel>
+                  <FormLabel className="text-white font-medium flex items-center">
+                    <Cocktail className="mr-2 h-4 w-4" />
+                    Drink Preferences
+                  </FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="What kind of drinks would you like to serve?" 
-                      className="bg-gray-700 border-gray-600 text-white" 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage className="text-red-400" />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="dietaryRestrictions"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-white font-medium">Dietary Restrictions</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Any dietary restrictions to consider?" 
-                      className="bg-gray-700 border-gray-600 text-white" 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage className="text-red-400" />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="additionalDetails"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-white font-medium">Additional Details</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Any other information that might help with planning" 
-                      className="bg-gray-700 border-gray-600 text-white" 
+                      placeholder="What kind of drinks would you like?" 
+                      className="bg-gray-700 border-gray-600 text-white resize-none h-20" 
                       {...field} 
                     />
                   </FormControl>
@@ -501,24 +486,30 @@ export function PlannerForm() {
               )}
             />
           </div>
-        )}
 
-        <div className="flex justify-between pt-4">
-          {step > 1 && (
-            <Button type="button" variant="outline" className="border-gray-600 text-white hover:bg-gray-700" onClick={prevStep}>
-              Previous
-            </Button>
-          )}
-          
-          {step < 2 ? (
-            <Button type="button" className="bg-blue-600 hover:bg-blue-700 ml-auto" onClick={nextStep}>
-              Next
-            </Button>
-          ) : (
-            <Button type="submit" disabled={isGenerating} className="bg-blue-600 hover:bg-blue-700">
-              {isGenerating ? "Generating..." : "Generate Event Plans"}
-            </Button>
-          )}
+          <FormField
+            control={form.control}
+            name="dietaryRestrictions"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-white font-medium">Dietary Restrictions</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Any allergies or dietary needs?" 
+                    className="bg-gray-700 border-gray-600 text-white" 
+                    {...field} 
+                  />
+                </FormControl>
+                <FormMessage className="text-red-400" />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="pt-4">
+          <Button type="submit" disabled={isGenerating} className="w-full bg-blue-600 hover:bg-blue-700 py-6 text-lg">
+            {isGenerating ? "Generating..." : "Create My Event Plan"}
+          </Button>
         </div>
       </form>
     </Form>
