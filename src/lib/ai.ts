@@ -7,7 +7,7 @@ import {
   generateDecorations,
   generateVenueSuggestions,
   generateInvitationText,
-  generateInvitationImage
+  generateInvitationImage as generateImageFromTheme
 } from "@/lib/generators";
 
 // We're using a mock implementation until you provide the real API key and decide whether to use a server-side approach
@@ -104,5 +104,7 @@ export async function generatePartyPlan(formData: any) {
   };
 }
 
-// Re-export the image generator from our generators
-export { generateInvitationImage };
+// Export the generateInvitationImage function with the correct signature
+export function generateInvitationImage(theme: string, invitationText: string): Promise<string> {
+  return generateImageFromTheme(theme, invitationText);
+}

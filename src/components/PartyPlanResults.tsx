@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { PartyPlanData, PartyPlan, BudgetBreakdown } from "@/types/chat";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,9 @@ export function PartyPlanResults({ results }: PartyPlanResultsProps) {
   const [optimizedBudget, setOptimizedBudget] = useState<BudgetBreakdown>(results.budgetBreakdown);
 
   const showInvitationPreview = async () => {
-    const image = await generateInvitationImage(results.invitationText);
+    // Pass both the theme and the invitation text to the generateInvitationImage function
+    const selectedTheme = results.plans[0]?.theme || "party";
+    const image = await generateInvitationImage(selectedTheme, results.invitationText);
     setInvitationImage(image);
   };
 
