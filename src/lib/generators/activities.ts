@@ -1,84 +1,133 @@
 
-export function generateActivities(theme: string, isKid: boolean): string[] {
-  const themeActivities: Record<string, string[]> = {
-    "Superhero": [
-      "Superhero costume contest",
-      "Superhero training obstacle course",
-      "Create your own superhero identity cards",
-      "Superhero movie marathon",
-    ],
-    "Princess": [
-      "Royal makeover station",
-      "Decorate tiaras and crowns",
-      "Royal tea party",
-      "Princess dance competition",
-    ],
-    "Sports": [
-      "Mini tournament of favorite sport",
-      "Sports-themed relay races",
-      "Medal ceremony for winners",
-      "Sports trivia game",
-    ],
-    "Space": [
-      "Build and launch mini rockets",
-      "Create alien crafts",
-      "Space-themed scavenger hunt",
-      "Glow-in-the-dark games",
-    ],
-    "Dinosaur": [
-      "Dinosaur egg hunt",
-      "Dino fossil excavation",
-      "Create dinosaur crafts",
-      "Dinosaur-themed games",
-    ],
-    "Gaming": [
-      "Video game tournament",
-      "Create a real-life version of a video game",
-      "Gaming trivia contest",
-      "Board game competition",
-    ],
-    "Art": [
-      "Paint and sip (juice for kids)",
-      "Collaborative mural creation",
-      "Art contest with prizes",
-      "Craft stations with different art styles",
-    ],
-    "Music": [
-      "Karaoke contest",
-      "Musical chairs",
-      "Create a birthday song",
-      "Dance competition",
-    ],
-    "Animals": [
-      "Animal face painting",
-      "Create animal masks",
-      "Animal-themed games",
-      "Mini petting zoo (if budget allows)",
-    ],
-    "Ocean": [
-      "Underwater treasure hunt",
-      "Create ocean crafts",
-      "Water balloon games",
-      "Mermaid/pirate makeovers",
-    ],
-    "Magic": [
-      "Magic show (professional or DIY)",
-      "Learn simple magic tricks",
-      "Potion making (mixed drinks)",
-      "Magic-themed scavenger hunt",
-    ],
-    "Science": [
-      "Fun science experiments",
-      "Create slime or other compounds",
-      "Science trivia game",
-      "Build and test simple machines",
-    ],
-  };
-  
-  return themeActivities[theme] || [
-    "Birthday cake and presents",
-    "Musical chairs",
-    "Scavenger hunt",
-    "Dance party",
+export function generateActivities(theme: string, isKid: boolean, age?: number | null): string[] {
+  // Default activities
+  let activities = [
+    "Interactive games",
+    "Music and dancing",
+    "Photo booth with props",
+    "Prize giveaways"
   ];
+
+  // Theme-specific activities
+  const themeActivities: Record<string, string[]> = {
+    "superhero": [
+      "Superhero costume contest",
+      "Obstacle course (save the city)",
+      "Design your own superhero mask",
+      "Superhero trivia game"
+    ],
+    "princess": [
+      "Royal makeover station",
+      "Treasure hunt for the royal jewels",
+      "Princess etiquette class",
+      "Carriage rides"
+    ],
+    "sports": [
+      "Mini tournament of the featured sport",
+      "Sports skills challenges",
+      "Indoor/outdoor games",
+      "Sports memorabilia showcase"
+    ],
+    "space": [
+      "Build and launch small rockets",
+      "Space-themed scavenger hunt",
+      "Create alien slime",
+      "Planetarium show (if available)"
+    ],
+    "dinosaur": [
+      "Dinosaur fossil dig",
+      "Dino egg hunt",
+      "Create dinosaur crafts",
+      "Dinosaur identification game"
+    ]
+  };
+
+  // If theme matches our predefined themes, use those activities
+  const lowerTheme = theme.toLowerCase();
+  if (themeActivities[lowerTheme]) {
+    activities = themeActivities[lowerTheme];
+  }
+
+  // Age-specific adjustments if it's a birthday and we have the age
+  if (age !== null && age !== undefined) {
+    // For very young children (0-3)
+    if (age <= 3) {
+      return [
+        "Simple sensory play stations",
+        "Bubble play",
+        "Age-appropriate music and dancing",
+        "Storybook corner"
+      ];
+    }
+    // For young children (4-7)
+    else if (age <= 7) {
+      return [
+        "Simple crafts with assistance",
+        "Musical chairs or similar games",
+        "Treasure hunt with easy clues", 
+        "Short magic show"
+      ];
+    }
+    // For older children (8-12)
+    else if (age <= 12) {
+      return [
+        "Team-building games",
+        "Arts and crafts station",
+        "Scavenger hunt with challenging clues",
+        "Talent show"
+      ];
+    }
+    // For teenagers (13-19)
+    else if (age <= 19) {
+      return [
+        "Video game tournament",
+        "Escape room challenges",
+        "Karaoke or DJ booth",
+        "Photography contest"
+      ];
+    }
+    // For young adults (20-30)
+    else if (age <= 30) {
+      return [
+        "Cocktail mixing class",
+        "Interactive games or friendly competition",
+        "Photo booth with props",
+        "Live music or DJ"
+      ];
+    }
+    // For adults (31-50)
+    else if (age <= 50) {
+      return [
+        "Wine or beer tasting",
+        "Interactive dinner games",
+        "Dance floor with professional instructor",
+        "Trivia or board games"
+      ];
+    }
+    // For older adults (51+)
+    else {
+      return [
+        "Memory sharing station",
+        "Relaxed games (cards, board games)",
+        "Live music from their era",
+        "Photo montage presentation"
+      ];
+    }
+  }
+
+  // Kid-specific adjustments
+  if (isKid) {
+    activities = activities.map(activity => {
+      if (activity.includes("cocktail") || activity.includes("wine")) {
+        return "Juice bar with fun, colorful drinks";
+      }
+      return activity;
+    });
+    
+    // Add some kid-specific activities
+    activities.push("Face painting");
+    activities.push("Balloon artist");
+  }
+
+  return activities;
 }

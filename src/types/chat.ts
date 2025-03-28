@@ -24,6 +24,7 @@ export type PartyPlan = {
   estimatedCost: string;
   hostName: string;
   location: string;
+  age?: number;
 };
 
 export type BudgetBreakdown = {
@@ -32,4 +33,14 @@ export type BudgetBreakdown = {
   activities: number;
   venue: number;
   misc: number;
+};
+
+export type VenueDetails = {
+  name: string;
+  address: string;
+  price: number;
+  capacity: number;
+  amenities: string[];
+  contactInfo: string;
+  availability: boolean;
 };

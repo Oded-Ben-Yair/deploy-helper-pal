@@ -1,258 +1,153 @@
-
 import React, { useState } from "react";
+import { PartyPlanData, PartyPlan, BudgetBreakdown } from "@/types/chat";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { InvitationPreview } from "./InvitationPreview";
-import { MapPin, Calendar, Users, DollarSign, Utensils, Wine, Gift } from "lucide-react";
+import { generateInvitationImage } from "@/lib/ai";
+import { saveAs } from 'file-saver';
+import { Badge } from "@/components/ui/badge";
+import { VenueDetails } from "@/components/VenueDetails";
+import { BudgetOptimizer } from "@/components/BudgetOptimizer";
 
 type PartyPlanResultsProps = {
-  results: {
-    plans: Array<{
-      title: string;
-      description: string;
-      theme: string;
-      activities: string[];
-      foodIdeas: string[];
-      drinkIdeas: string[];
-      decorations: string[];
-      venues: string[];
-      estimatedCost: string;
-      hostName: string;
-      location: string;
-    }>;
-    invitationText: string;
-    budgetBreakdown: {
-      food: number;
-      decorations: number;
-      activities: number;
-      venue: number;
-      misc: number;
-    };
-  };
+  results: PartyPlanData;
 };
 
 export function PartyPlanResults({ results }: PartyPlanResultsProps) {
-  const [selectedPlan, setSelectedPlan] = useState(0);
-  const [showInvitation, setShowInvitation] = useState(false);
-  const [activeTab, setActiveTab] = useState("plans");
+  const [invitationImage, setInvitationImage] = useState<string | null>(null);
+  const [isVenueDetailsOpen, setIsVenueDetailsOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<PartyPlan | null>(null);
+  const [isBudgetOptimizerOpen, setIsBudgetOptimizerOpen] = useState(false);
+  const [optimizedBudget, setOptimizedBudget] = useState<BudgetBreakdown>(results.budgetBreakdown);
 
-  if (showInvitation) {
-    return (
-      <div className="space-y-6">
-        <InvitationPreview 
-          invitationText={results.invitationText} 
-          theme={results.plans[selectedPlan].theme} 
-        />
-        <Button onClick={() => setShowInvitation(false)} className="w-full bg-blue-600 hover:bg-blue-700">
-          Back to Plans
-        </Button>
-      </div>
-    );
-  }
+  const showInvitationPreview = async () => {
+    const image = await generateInvitationImage(results.invitationText);
+    setInvitationImage(image);
+  };
 
-  const currentPlan = results.plans[selectedPlan];
+  const downloadPlan = () => {
+    const planData = JSON.stringify(results, null, 2);
+    const blob = new Blob([planData], { type: "text/json;charset=utf-8" });
+    saveAs(blob, "party_plan.json");
+  };
+
+  const handleOpenVenueDetails = (plan: PartyPlan) => {
+    setSelectedPlan(plan);
+    setIsVenueDetailsOpen(true);
+  };
+
+  const handleCloseVenueDetails = () => {
+    setIsVenueDetailsOpen(false);
+    setSelectedPlan(null);
+  };
+
+  const handleBookVenue = (venue: any) => {
+    alert(`Venue ${venue.name} booked successfully!`);
+    handleCloseVenueDetails();
+  };
+
+  const handleOpenBudgetOptimizer = (plan: PartyPlan) => {
+    setSelectedPlan(plan);
+    setIsBudgetOptimizerOpen(true);
+  };
+
+  const handleCloseBudgetOptimizer = () => {
+    setIsBudgetOptimizerOpen(false);
+    setSelectedPlan(null);
+  };
+
+  const handleSaveOptimizedBudget = (newBudget: BudgetBreakdown) => {
+    setOptimizedBudget(newBudget);
+    setIsBudgetOptimizerOpen(false);
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-white mb-2">Your AI-Generated Party Plans</h2>
-        <p className="text-gray-400">
-          Choose a plan that suits your needs or customize any of these suggestions
-        </p>
-      </div>
+    <div className="container mx-auto p-4 text-white">
+      <h1 className="text-3xl font-bold mb-6">Event Plan Results</h1>
 
-      <Tabs defaultValue="plans" value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 bg-gray-800">
-          <TabsTrigger value="plans" className="text-gray-300 data-[state=active]:bg-gray-700 data-[state=active]:text-white">Party Plans</TabsTrigger>
-          <TabsTrigger value="details" className="text-gray-300 data-[state=active]:bg-gray-700 data-[state=active]:text-white">Plan Details</TabsTrigger>
-          <TabsTrigger value="budget" className="text-gray-300 data-[state=active]:bg-gray-700 data-[state=active]:text-white">Budget</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="plans" className="space-y-4">
-          <div className="grid grid-cols-1 gap-4">
-            {results.plans.map((plan, index) => (
-              <Card key={index} 
-                className={`cursor-pointer transition-all bg-gray-800 border-gray-700 hover:bg-gray-700 ${
-                  selectedPlan === index ? 'border-blue-500 shadow-md' : 'border-gray-700'
-                }`}
-                onClick={() => setSelectedPlan(index)}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-xl text-white">{plan.title}</CardTitle>
-                  <CardDescription className="text-gray-400">Theme: {plan.theme}</CardDescription>
-                </CardHeader>
-                <CardContent className="pb-2 text-gray-300">
-                  <p className="mb-2">{plan.description}</p>
-                  <div className="flex items-center text-sm mt-2">
-                    <MapPin className="h-4 w-4 mr-1 text-gray-400" />
-                    <span>{plan.location}</span>
-                  </div>
-                  <div className="flex items-center text-sm mt-1">
-                    <DollarSign className="h-4 w-4 mr-1 text-gray-400" />
-                    <span>{plan.estimatedCost}</span>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full border-gray-600 text-white hover:bg-gray-700" 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedPlan(index);
-                      setActiveTab("details");
-                    }}
-                  >
-                    View Details
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
+      {results.plans.map((plan, index) => (
+        <div key={index} className="mb-8 p-6 bg-gray-800 rounded-lg shadow-md border border-gray-700">
+          <h2 className="text-2xl font-semibold mb-4">{plan.title}</h2>
+          <p className="text-gray-300 mb-4">{plan.description}</p>
+
+          <div className="mb-4">
+            <Badge className="mr-2 bg-blue-600 border-blue-700 text-white">Theme: {plan.theme}</Badge>
+            <Badge className="mr-2 bg-green-600 border-green-700 text-white">Estimated Cost: {plan.estimatedCost}</Badge>
+            <Badge className="bg-purple-600 border-purple-700 text-white">Location: {plan.location}</Badge>
           </div>
-        </TabsContent>
-        
-        <TabsContent value="details" className="space-y-4">
-          <Card className="bg-gray-800 border-gray-700">
-            <CardHeader>
-              <CardTitle className="text-xl text-white">{currentPlan.title}</CardTitle>
-              <CardDescription className="text-gray-400">Hosted by: {currentPlan.hostName}</CardDescription>
-            </CardHeader>
-            <CardContent className="text-gray-300">
-              <div className="space-y-4">
-                <p>{currentPlan.description}</p>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                  <section>
-                    <h3 className="flex items-center text-white font-semibold mb-2">
-                      <Gift className="h-4 w-4 mr-2 text-blue-400" />
-                      Activities
-                    </h3>
-                    <ul className="list-disc pl-5 text-gray-300 space-y-1">
-                      {currentPlan.activities.map((activity, index) => (
-                        <li key={index}>{activity}</li>
-                      ))}
-                    </ul>
-                  </section>
-                  
-                  <section>
-                    <h3 className="flex items-center text-white font-semibold mb-2">
-                      <Utensils className="h-4 w-4 mr-2 text-blue-400" />
-                      Food Ideas
-                    </h3>
-                    <ul className="list-disc pl-5 text-gray-300 space-y-1">
-                      {currentPlan.foodIdeas.map((food, index) => (
-                        <li key={index}>{food}</li>
-                      ))}
-                    </ul>
-                  </section>
-                  
-                  <section>
-                    <h3 className="flex items-center text-white font-semibold mb-2">
-                      <Wine className="h-4 w-4 mr-2 text-blue-400" />
-                      Drink Ideas
-                    </h3>
-                    <ul className="list-disc pl-5 text-gray-300 space-y-1">
-                      {currentPlan.drinkIdeas.map((drink, index) => (
-                        <li key={index}>{drink}</li>
-                      ))}
-                    </ul>
-                  </section>
-                  
-                  <section>
-                    <h3 className="flex items-center text-white font-semibold mb-2">
-                      <MapPin className="h-4 w-4 mr-2 text-blue-400" />
-                      Venue Ideas
-                    </h3>
-                    <ul className="list-disc pl-5 text-gray-300 space-y-1">
-                      {currentPlan.venues.map((venue, index) => (
-                        <li key={index}>{venue}</li>
-                      ))}
-                    </ul>
-                  </section>
-                  
-                  <section className="md:col-span-2">
-                    <h3 className="flex items-center text-white font-semibold mb-2">
-                      <Calendar className="h-4 w-4 mr-2 text-blue-400" />
-                      Decorations
-                    </h3>
-                    <ul className="list-disc pl-5 text-gray-300 space-y-1">
-                      {currentPlan.decorations.map((decoration, index) => (
-                        <li key={index}>{decoration}</li>
-                      ))}
-                    </ul>
-                  </section>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex flex-col gap-3">
-              <Button 
-                className="w-full bg-blue-600 hover:bg-blue-700"
-                onClick={() => setShowInvitation(true)}
-              >
-                Preview Invitation
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                onClick={() => setActiveTab("plans")}
-                className="w-full border-gray-600 text-white hover:bg-gray-700"
-              >
-                Back to Plans
-              </Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="budget" className="space-y-4">
-          <Card className="bg-gray-800 border-gray-700">
-            <CardHeader>
-              <CardTitle className="text-xl text-white">Budget Breakdown</CardTitle>
-              <CardDescription className="text-gray-400">Estimated costs for different categories</CardDescription>
-            </CardHeader>
-            <CardContent className="text-white">
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-gray-700 p-4 rounded-lg">
-                    <p className="text-sm text-gray-400">Food & Drinks</p>
-                    <p className="text-2xl font-semibold">${results.budgetBreakdown.food}</p>
-                  </div>
-                  <div className="bg-gray-700 p-4 rounded-lg">
-                    <p className="text-sm text-gray-400">Decorations</p>
-                    <p className="text-2xl font-semibold">${results.budgetBreakdown.decorations}</p>
-                  </div>
-                  <div className="bg-gray-700 p-4 rounded-lg">
-                    <p className="text-sm text-gray-400">Activities</p>
-                    <p className="text-2xl font-semibold">${results.budgetBreakdown.activities}</p>
-                  </div>
-                  <div className="bg-gray-700 p-4 rounded-lg">
-                    <p className="text-sm text-gray-400">Venue</p>
-                    <p className="text-2xl font-semibold">${results.budgetBreakdown.venue}</p>
-                  </div>
-                </div>
-                
-                <div className="mt-4 pt-4 border-t border-gray-700">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">Miscellaneous</span>
-                    <span className="font-semibold">${results.budgetBreakdown.misc}</span>
-                  </div>
-                  <div className="flex justify-between items-center mt-2">
-                    <span className="font-bold">Total</span>
-                    <span className="font-bold text-xl">
-                      ${Object.values(results.budgetBreakdown).reduce((a, b) => a + b, 0)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
 
-      <div className="pt-4">
-        <Button variant="outline" className="w-full border-gray-600 text-white hover:bg-gray-700" onClick={() => window.location.reload()}>
-          Start Over
-        </Button>
+          <h3 className="text-xl font-semibold mt-6 mb-2">Activities</h3>
+          <ul className="list-disc list-inside text-gray-300 mb-4">
+            {plan.activities.map((activity, i) => (
+              <li key={i}>{activity}</li>
+            ))}
+          </ul>
+
+          <h3 className="text-xl font-semibold mt-4 mb-2">Food Ideas</h3>
+          <ul className="list-disc list-inside text-gray-300 mb-4">
+            {plan.foodIdeas.map((food, i) => (
+              <li key={i}>{food}</li>
+            ))}
+          </ul>
+
+          <h3 className="text-xl font-semibold mt-4 mb-2">Drink Ideas</h3>
+          <ul className="list-disc list-inside text-gray-300 mb-4">
+            {plan.drinkIdeas.map((drink, i) => (
+              <li key={i}>{drink}</li>
+            ))}
+          </ul>
+
+          <h3 className="text-xl font-semibold mt-4 mb-2">Decoration Ideas</h3>
+          <ul className="list-disc list-inside text-gray-300 mb-4">
+            {plan.decorations.map((decoration, i) => (
+              <li key={i}>{decoration}</li>
+            ))}
+          </ul>
+
+          <div className="flex justify-end gap-4 mt-8">
+            <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => handleOpenVenueDetails(plan)}>
+              View Venue Options
+            </Button>
+            <Button variant="outline" className="border-gray-600 text-white hover:bg-gray-700" onClick={() => handleOpenBudgetOptimizer(plan)}>
+              Optimize Budget
+            </Button>
+          </div>
+        </div>
+      ))}
+
+      <h2 className="text-2xl font-semibold mt-8 mb-4">Invitation Text</h2>
+      <div className="p-6 bg-gray-800 rounded-lg shadow-md border border-gray-700">
+        <p className="text-gray-300 whitespace-pre-line">{results.invitationText}</p>
+        <div className="flex justify-end gap-4 mt-4">
+          <Button className="bg-purple-600 hover:bg-purple-700" onClick={showInvitationPreview}>
+            Show Invitation Preview
+          </Button>
+          <Button variant="outline" className="border-gray-600 text-white hover:bg-gray-700" onClick={downloadPlan}>
+            Download Plan
+          </Button>
+        </div>
       </div>
+
+      {invitationImage && (
+        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-75 flex items-center justify-center z-50" onClick={() => setInvitationImage(null)}>
+          <img src={invitationImage} alt="Invitation Preview" className="max-w-4xl max-h-screen" />
+        </div>
+      )}
+
+      {selectedPlan && isVenueDetailsOpen && (
+        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-75 flex items-center justify-center z-50">
+          <VenueDetails plan={selectedPlan} onClose={handleCloseVenueDetails} onBook={handleBookVenue} />
+        </div>
+      )}
+
+      {selectedPlan && isBudgetOptimizerOpen && (
+        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-75 flex items-center justify-center z-50">
+          <BudgetOptimizer
+            plan={selectedPlan}
+            initialBudget={results.budgetBreakdown}
+            onSave={handleSaveOptimizedBudget}
+            onClose={handleCloseBudgetOptimizer}
+          />
+        </div>
+      )}
     </div>
   );
 }

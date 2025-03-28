@@ -54,9 +54,10 @@ export async function generatePartyPlan(formData: any) {
   const plans = relevantThemes.map((theme) => {
     const guestType = formData.guestType || "adults";
     const isKid = guestType === "children" || guestType === "family";
+    const age = formData.age ? parseInt(formData.age) : null;
     
-    // Generate activities based on guest type and theme
-    const activities = generateActivities(theme, isKid);
+    // Generate activities based on guest type, theme, and age
+    const activities = generateActivities(theme, isKid, age);
     
     // Generate food ideas based on theme and dietary restrictions
     const foodIdeas = generateFoodIdeas(theme, formData.dietaryRestrictions, formData.foodPreferences);
@@ -82,6 +83,7 @@ export async function generatePartyPlan(formData: any) {
       estimatedCost: `${formData.currency} ${totalBudget}`,
       hostName: formData.hostName,
       location: `${formData.city}, ${formData.country}`,
+      age: age
     };
   });
   

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,11 +21,11 @@ const formSchema = z.object({
   eventType: z.string().min(2, { message: "Event type must be specified." }),
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   hostName: z.string().min(2, { message: "Host name must be at least 2 characters." }),
+  age: z.string().optional(),
   date: z.date({
     required_error: "Please select a date.",
   }),
   startTime: z.string().min(1, { message: "Please specify a start time." }),
-  endTime: z.string().optional(),
   guests: z.string().refine((val) => !isNaN(parseInt(val)) && parseInt(val) >= 0, {
     message: "Number of guests must be a non-negative number.",
   }),
@@ -36,18 +36,12 @@ const formSchema = z.object({
   currency: z.string().min(1, { message: "Please select a currency." }),
   city: z.string().min(1, { message: "City must be specified." }),
   country: z.string().min(1, { message: "Country must be specified." }),
-  interests: z.string().min(3, { message: "Please provide at least some interests or theme ideas." }),
+  interests: z.string().min(3, { message: "Please provide some interests or theme ideas." }),
   dietaryRestrictions: z.string().optional(),
-  preferences: z.string().optional(),
   location: z.enum(["home", "outdoors", "venue", "restaurant", "other"]),
   foodPreferences: z.string().optional(),
   drinkPreferences: z.string().optional(),
-  dressCode: z.string().optional(),
-  specialRequests: z.string().optional(),
-  entertainment: z.string().optional(),
-  transportation: z.string().optional(),
   additionalDetails: z.string().optional(),
-  seasonalConsiderations: z.boolean().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -56,6 +50,7 @@ export function PlannerForm() {
   const [step, setStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [planResults, setPlanResults] = useState<any | null>(null);
+  const [showAgeField, setShowAgeField] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<FormValues>({
@@ -64,8 +59,8 @@ export function PlannerForm() {
       eventType: "",
       name: "",
       hostName: "",
+      age: "",
       startTime: "",
-      endTime: "",
       guests: "",
       guestType: "adults",
       budget: "",
@@ -74,18 +69,20 @@ export function PlannerForm() {
       country: "",
       interests: "",
       dietaryRestrictions: "",
-      preferences: "",
       location: "venue",
       foodPreferences: "",
       drinkPreferences: "",
-      dressCode: "",
-      specialRequests: "",
-      entertainment: "",
-      transportation: "",
       additionalDetails: "",
-      seasonalConsiderations: false,
     },
   });
+
+  // Watch for event type changes to show/hide age field
+  const eventType = form.watch("eventType");
+  
+  useEffect(() => {
+    // Show age field if event type contains "birthday"
+    setShowAgeField(eventType.toLowerCase().includes("birthday"));
+  }, [eventType]);
 
   const onSubmit = async (data: FormValues) => {
     setIsGenerating(true);
@@ -97,7 +94,7 @@ export function PlannerForm() {
     try {
       const result = await generatePartyPlan(data);
       setPlanResults(result);
-      setStep(4);
+      setStep(3);
     } catch (error) {
       toast({
         title: "Error",
@@ -114,11 +111,11 @@ export function PlannerForm() {
     let currentStepValid;
     
     if (step === 1) {
-      currentStepValid = form.trigger(["eventType", "name", "hostName", "date", "startTime", "guests", "guestType"]);
-    } else if (step === 2) {
-      currentStepValid = form.trigger(["budget", "currency", "city", "country", "location"]);
+      const fieldsToValidate = ["eventType", "name", "hostName", "date", "startTime", "guests", "guestType"];
+      if (showAgeField) fieldsToValidate.push("age");
+      currentStepValid = form.trigger(fieldsToValidate);
     } else {
-      currentStepValid = form.trigger(["interests", "dietaryRestrictions", "foodPreferences", "drinkPreferences", "additionalDetails"]);
+      currentStepValid = form.trigger(["budget", "currency", "city", "country", "location", "interests", "foodPreferences", "drinkPreferences"]);
     }
 
     currentStepValid.then((valid) => {
@@ -128,7 +125,7 @@ export function PlannerForm() {
 
   const prevStep = () => setStep(step - 1);
 
-  if (step === 4 && planResults) {
+  if (step === 3 && planResults) {
     return <PartyPlanResults results={planResults} />;
   }
 
@@ -178,6 +175,27 @@ export function PlannerForm() {
                 </FormItem>
               )}
             />
+
+            {showAgeField && (
+              <FormField
+                control={form.control}
+                name="age"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-white font-medium">Age (Birthday Celebrant)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        placeholder="Enter age" 
+                        className="bg-gray-700 border-gray-600 text-white" 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage className="text-red-400" />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <FormField
               control={form.control}
@@ -243,39 +261,18 @@ export function PlannerForm() {
 
               <FormField
                 control={form.control}
-                name="endTime"
+                name="guests"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-white font-medium">End Time (Optional)</FormLabel>
+                    <FormLabel className="text-white font-medium">Number of Guests</FormLabel>
                     <FormControl>
-                      <div className="relative">
-                        <Input 
-                          type="time" 
-                          className="bg-gray-700 border-gray-600 text-white pl-10"
-                          {...field}
-                        />
-                        <Clock className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                      </div>
+                      <Input placeholder="Enter number of guests" className="bg-gray-700 border-gray-600 text-white" {...field} />
                     </FormControl>
                     <FormMessage className="text-red-400" />
                   </FormItem>
                 )}
               />
             </div>
-
-            <FormField
-              control={form.control}
-              name="guests"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-white font-medium">Number of Guests</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter number of guests" className="bg-gray-700 border-gray-600 text-white" {...field} />
-                  </FormControl>
-                  <FormMessage className="text-red-400" />
-                </FormItem>
-              )}
-            />
 
             <FormField
               control={form.control}
@@ -339,6 +336,7 @@ export function PlannerForm() {
                         <SelectItem value="USD">USD - $</SelectItem>
                         <SelectItem value="EUR">EUR - €</SelectItem>
                         <SelectItem value="GBP">GBP - £</SelectItem>
+                        <SelectItem value="NIS">NIS - ₪</SelectItem>
                         <SelectItem value="JPY">JPY - ¥</SelectItem>
                         <SelectItem value="CAD">CAD - C$</SelectItem>
                         <SelectItem value="AUD">AUD - A$</SelectItem>
@@ -412,42 +410,6 @@ export function PlannerForm() {
 
             <FormField
               control={form.control}
-              name="dressCode"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-white font-medium">Dress Code</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Formal, Casual, Costume, etc." className="bg-gray-700 border-gray-600 text-white" {...field} />
-                  </FormControl>
-                  <FormMessage className="text-red-400" />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="transportation"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-white font-medium">Transportation Needs</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Any transportation arrangements needed? (e.g., shuttle service, parking considerations)" 
-                      className="bg-gray-700 border-gray-600 text-white" 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage className="text-red-400" />
-                </FormItem>
-              )}
-            />
-          </div>
-        )}
-
-        {step === 3 && (
-          <div className="space-y-4">
-            <FormField
-              control={form.control}
               name="interests"
               render={({ field }) => (
                 <FormItem>
@@ -455,12 +417,12 @@ export function PlannerForm() {
                   <FormControl>
                     <Textarea 
                       placeholder="Enter theme ideas or interests" 
-                      className="bg-gray-700 border-gray-600 text-white min-h-24" 
+                      className="bg-gray-700 border-gray-600 text-white" 
                       {...field} 
                     />
                   </FormControl>
                   <FormDescription className="text-gray-400">
-                    What themes or activities would you like to include? (e.g., sports, movies, formal, casual)
+                    What themes or activities would you like to include?
                   </FormDescription>
                   <FormMessage className="text-red-400" />
                 </FormItem>
@@ -523,42 +485,6 @@ export function PlannerForm() {
 
             <FormField
               control={form.control}
-              name="entertainment"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-white font-medium">Entertainment Ideas</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Any specific entertainment you'd like? (DJ, live band, games, activities)" 
-                      className="bg-gray-700 border-gray-600 text-white" 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage className="text-red-400" />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="specialRequests"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-white font-medium">Special Requests</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Any special needs or requirements? (accessibility, photography, etc.)" 
-                      className="bg-gray-700 border-gray-600 text-white" 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage className="text-red-400" />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
               name="additionalDetails"
               render={({ field }) => (
                 <FormItem>
@@ -584,7 +510,7 @@ export function PlannerForm() {
             </Button>
           )}
           
-          {step < 3 ? (
+          {step < 2 ? (
             <Button type="button" className="bg-blue-600 hover:bg-blue-700 ml-auto" onClick={nextStep}>
               Next
             </Button>
