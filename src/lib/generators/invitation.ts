@@ -1,17 +1,23 @@
 
+/**
+ * Invitation text generator
+ * Creates themed invitation text based on event parameters
+ */
+
+/**
+ * Generate themed invitation text for an event
+ * @param eventName Name of the person or event
+ * @param hostName Name of the host
+ * @param eventType Type of event (birthday, wedding, etc.)
+ * @param theme Selected theme
+ * @param date Event date
+ * @returns Formatted invitation text
+ */
 export function generateInvitationText(eventName: string, hostName: string, eventType: string, theme: string, date: Date): string {
-  const dateString = date.toLocaleDateString('en-US', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  });
+  const dateString = formatEventDate(date);
+  const timeString = formatEventTime(date);
   
-  const timeString = date.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit'
-  });
-  
+  // Theme-specific invitation templates
   const invitations: Record<string, string> = {
     "Superhero": `CALLING ALL SUPERHEROES!
 
@@ -94,7 +100,53 @@ RSVP to ${hostName} by [Insert RSVP Date]
 Dinosaur costumes and explorer gear welcome!`,
   };
   
-  return invitations[theme] || `
+  // Return themed invitation or default if theme not found
+  return invitations[theme] || getDefaultInvitation(eventName, eventType, hostName, dateString, timeString);
+}
+
+/**
+ * Format the event date in a readable format
+ * @param date Date object
+ * @returns Formatted date string
+ */
+function formatEventDate(date: Date): string {
+  return date.toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+}
+
+/**
+ * Format the event time in a readable format
+ * @param date Date object
+ * @returns Formatted time string
+ */
+function formatEventTime(date: Date): string {
+  return date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit'
+  });
+}
+
+/**
+ * Get default invitation text
+ * @param eventName Name of the person or event
+ * @param eventType Type of event
+ * @param hostName Name of the host
+ * @param dateString Formatted date string
+ * @param timeString Formatted time string
+ * @returns Default invitation text
+ */
+function getDefaultInvitation(
+  eventName: string, 
+  eventType: string, 
+  hostName: string,
+  dateString: string,
+  timeString: string
+): string {
+  return `
 You're Invited!
 
 Please join us to celebrate

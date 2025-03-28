@@ -1,4 +1,9 @@
 
+/**
+ * ChatInterface Component
+ * Provides conversational interface for event planning assistance
+ */
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
@@ -9,15 +14,16 @@ import { ChatInput } from "./chat/ChatInput";
 import { InvitationPreview } from "./InvitationPreview";
 import { processUserMessage } from "@/utils/chatUtils";
 
-type ChatInterfaceProps = {
+interface ChatInterfaceProps {
   onClose: () => void;
-};
+}
 
 export function ChatInterface({ onClose }: ChatInterfaceProps) {
+  // Initialize state
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
-      content: `Hello! I'm your AI event planner assistant. I'll help you create an amazing event!
+      content: `Hello! I'm your event planner assistant. I'll help you create an amazing event!
       
 To get started, please tell me:
 • What type of event are you planning? (birthday, wedding, corporate, etc.)
@@ -42,7 +48,12 @@ The more details you share, the better I can help you plan!`,
   
   const { toast } = useToast();
 
+  /**
+   * Handle sending user message and generating AI response
+   * @param input User input text
+   */
   const handleSend = async (input: string) => {
+    // Create and add user message to chat
     const userMessage: Message = {
       id: Date.now().toString(),
       content: input,
@@ -53,11 +64,12 @@ The more details you share, the better I can help you plan!`,
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
-    // Simulate AI thinking time
+    // Generate AI response with simulated thinking time
     setTimeout(async () => {
       try {
         const { response, partyPlan: newPartyPlan } = await processUserMessage(input);
         
+        // Update state with new party plan data if available
         if (newPartyPlan) {
           setPartyPlan(newPartyPlan);
           const selectedTheme = newPartyPlan.plans[0].theme;
@@ -65,6 +77,7 @@ The more details you share, the better I can help you plan!`,
           setInvitationText(newPartyPlan.invitationText);
         }
 
+        // Add AI response to chat
         const aiMessage: Message = {
           id: Date.now().toString(),
           content: response,
@@ -86,15 +99,41 @@ The more details you share, the better I can help you plan!`,
     }, 1500);
   };
 
+  /**
+   * Display invitation preview
+   */
   const showInvitationPreview = () => {
     setShowInvitation(true);
   };
 
+  /**
+   * Generate and download party plan as text file
+   */
   const downloadPlan = () => {
     if (!partyPlan) return;
     
     const selectedPlan = partyPlan.plans[0];
-    const planText = `
+    const planText = generatePlanText(selectedPlan, partyPlan.invitationText);
+
+    const element = document.createElement("a");
+    const file = new Blob([planText], {type: 'text/plain'});
+    element.href = URL.createObjectURL(file);
+    element.download = `${selectedPlan.theme}_Event_Plan.txt`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+    
+    toast({
+      title: "Success",
+      description: "Event plan downloaded successfully!",
+    });
+  };
+
+  /**
+   * Format plan data as text for download
+   */
+  const generatePlanText = (selectedPlan: any, invitationText: string): string => {
+    return `
 # ${selectedPlan.title}
 
 ## Description
@@ -122,21 +161,8 @@ ${selectedPlan.venues ? selectedPlan.venues.map((v: string) => `- ${v}`).join('\
 Estimated Cost: ${selectedPlan.estimatedCost}
 
 ## Invitation
-${partyPlan.invitationText}
+${invitationText}
 `;
-
-    const element = document.createElement("a");
-    const file = new Blob([planText], {type: 'text/plain'});
-    element.href = URL.createObjectURL(file);
-    element.download = `${selectedPlan.theme}_Event_Plan.txt`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-    
-    toast({
-      title: "Success",
-      description: "Event plan downloaded successfully!",
-    });
   };
 
   return (

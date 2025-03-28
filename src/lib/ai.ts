@@ -1,4 +1,9 @@
 
+/**
+ * AI Party Planning Module
+ * This module provides functions for generating party planning suggestions and materials.
+ */
+
 import { toast } from "@/hooks/use-toast";
 import { 
   generateActivities,
@@ -10,17 +15,18 @@ import {
   generateInvitationImage as generateImageFromTheme
 } from "@/lib/generators";
 
-// We're using a mock implementation until you provide the real API key and decide whether to use a server-side approach
+/**
+ * Generates a comprehensive party plan based on user inputs
+ * @param formData User input data containing event details
+ * @returns A structured party plan with themes, activities, food ideas, etc.
+ */
 export async function generatePartyPlan(formData: any) {
   console.log("Generating party plan with data:", formData);
   
-  // In a real implementation, we would call the OpenAI API here
-  // For now, we'll return mock data
-  
   // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 2000));
+  await new Promise(resolve => setTimeout(resolve, 1500));
   
-  // Example themes based on interests and age
+  // Define possible themes for event selection
   const possibleThemes = [
     "Superhero", "Princess", "Sports", "Space", "Dinosaur", 
     "Gaming", "Art", "Music", "Animals", "Ocean", "Magic", "Science",
@@ -28,7 +34,7 @@ export async function generatePartyPlan(formData: any) {
   ];
   
   // Select themes based on interests
-  const interests = formData.interests.toLowerCase();
+  const interests = formData.interests?.toLowerCase() || '';
   let relevantThemes = possibleThemes.filter(theme => 
     interests.includes(theme.toLowerCase())
   );
@@ -41,7 +47,7 @@ export async function generatePartyPlan(formData: any) {
   }
   
   // Calculate budget breakdown
-  const totalBudget = parseInt(formData.budget);
+  const totalBudget = parseInt(formData.budget) || 500;
   const budgetBreakdown = {
     food: Math.round(totalBudget * 0.4),
     decorations: Math.round(totalBudget * 0.15),
@@ -60,29 +66,29 @@ export async function generatePartyPlan(formData: any) {
     const activities = generateActivities(theme, isKid, age);
     
     // Generate food ideas based on theme and dietary restrictions
-    const foodIdeas = generateFoodIdeas(theme, formData.dietaryRestrictions, formData.foodPreferences);
+    const foodIdeas = generateFoodIdeas(theme, formData.dietaryRestrictions || '', formData.foodPreferences || '');
     
     // Generate drink ideas based on preferences
-    const drinkIdeas = generateDrinkIdeas(theme, isKid, formData.drinkPreferences);
+    const drinkIdeas = generateDrinkIdeas(theme, isKid, formData.drinkPreferences || '');
     
     // Generate decorations based on theme
     const decorations = generateDecorations(theme);
     
     // Generate venue suggestions based on location type
-    const venues = generateVenueSuggestions(theme, formData.location, formData.city);
+    const venues = generateVenueSuggestions(theme, formData.location || 'venue', formData.city || 'Local', age);
     
     return {
-      title: `${theme} ${formData.eventType} Experience`,
-      description: `A fun-filled ${theme.toLowerCase()} themed ${formData.eventType.toLowerCase()} perfect for ${formData.name}, with activities and decorations that will create amazing memories.`,
+      title: `${theme} ${formData.eventType || 'Event'} Experience`,
+      description: `A fun-filled ${theme.toLowerCase()} themed ${(formData.eventType || 'event').toLowerCase()} perfect for ${formData.name || 'you'}, with activities and decorations that will create amazing memories.`,
       theme,
       activities,
       foodIdeas,
       drinkIdeas,
       decorations,
       venues,
-      estimatedCost: `${formData.currency} ${totalBudget}`,
-      hostName: formData.hostName,
-      location: `${formData.city}, ${formData.country}`,
+      estimatedCost: `${formData.currency || 'USD'} ${totalBudget}`,
+      hostName: formData.hostName || 'Host',
+      location: `${formData.city || 'City'}, ${formData.country || 'Country'}`,
       age: age
     };
   });
@@ -90,9 +96,9 @@ export async function generatePartyPlan(formData: any) {
   // Generate invitation text
   const selectedTheme = plans[0].theme;
   const invitationText = generateInvitationText(
-    formData.name, 
-    formData.hostName,
-    formData.eventType,
+    formData.name || 'Guest', 
+    formData.hostName || 'Host',
+    formData.eventType || 'Event',
     selectedTheme,
     formData.date ? new Date(formData.date) : new Date()
   );
@@ -104,7 +110,12 @@ export async function generatePartyPlan(formData: any) {
   };
 }
 
-// Export the generateInvitationImage function with the correct signature
+/**
+ * Generates an invitation image based on theme
+ * @param theme The selected party theme
+ * @param invitationText Text to display on the invitation
+ * @returns URL to the generated image
+ */
 export function generateInvitationImage(theme: string, invitationText: string): Promise<string> {
   return generateImageFromTheme(theme, invitationText);
 }

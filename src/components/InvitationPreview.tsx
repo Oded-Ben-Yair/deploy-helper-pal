@@ -1,4 +1,9 @@
 
+/**
+ * InvitationPreview Component
+ * Displays preview of themed party invitation with image
+ */
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,16 +11,17 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Loader2 } from "lucide-react";
 import { generateInvitationImage } from "@/lib/ai";
 
-type InvitationPreviewProps = {
+interface InvitationPreviewProps {
   invitationText: string;
   theme: string;
-};
+}
 
 export function InvitationPreview({ invitationText, theme }: InvitationPreviewProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(true);
   const [error, setError] = useState(false);
 
+  // Generate the invitation image when component mounts or theme changes
   useEffect(() => {
     const generateImage = async () => {
       try {
@@ -34,7 +40,9 @@ export function InvitationPreview({ invitationText, theme }: InvitationPreviewPr
     generateImage();
   }, [theme, invitationText]);
 
-  // Get a background color based on the theme
+  /**
+   * Get background gradient based on theme
+   */
   const getThemeColor = (theme: string): string => {
     const themeMap: Record<string, string> = {
       "superhero": "bg-gradient-to-r from-blue-500 to-purple-600",
@@ -61,6 +69,9 @@ export function InvitationPreview({ invitationText, theme }: InvitationPreviewPr
     return themeMap[theme.toLowerCase()] || "bg-gradient-to-r from-purple-400 to-pink-500";
   };
 
+  /**
+   * Get theme-specific emoji
+   */
   const getThemeEmoji = (theme: string): string => {
     const emojiMap: Record<string, string> = {
       "superhero": "🦸‍♂️",
@@ -86,6 +97,9 @@ export function InvitationPreview({ invitationText, theme }: InvitationPreviewPr
     return emojiMap[theme.toLowerCase()] || "🎉";
   };
 
+  /**
+   * Download invitation text as a file
+   */
   const downloadInvitation = () => {
     const element = document.createElement("a");
     const file = new Blob([invitationText], {type: 'text/plain'});
@@ -96,6 +110,9 @@ export function InvitationPreview({ invitationText, theme }: InvitationPreviewPr
     document.body.removeChild(element);
   };
 
+  /**
+   * Copy invitation text to clipboard
+   */
   const copyToClipboard = () => {
     navigator.clipboard.writeText(invitationText);
     alert("Invitation text copied to clipboard!");
@@ -121,7 +138,7 @@ export function InvitationPreview({ invitationText, theme }: InvitationPreviewPr
                 <div className="text-center p-4">
                   <div className="text-4xl mb-2">😕</div>
                   <p className="text-sm">Could not generate image</p>
-                  <p className="text-xs mt-2">AI-generated image will appear here</p>
+                  <p className="text-xs mt-2">Image will appear here</p>
                 </div>
               ) : imageUrl ? (
                 <img 
